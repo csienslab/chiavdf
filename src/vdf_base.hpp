@@ -181,6 +181,7 @@ struct form {
     integer c;
 
     static form from_abd(const integer& t_a, const integer& t_b, const integer& d);
+    static form from_abc(const integer& t_a, const integer& t_b, const integer& t_c);
     static form identity(const integer& d);
     static form generator(const integer& d) {
         return from_abd(integer(2), integer(1), d);

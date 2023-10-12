@@ -124,6 +124,17 @@ struct form {
         return res;
     }
 
+    static form from_abc(const integer& t_a, const integer& t_b, const integer& t_c) {
+        form res;
+        res.a=t_a;
+        res.b=t_b;
+        res.c=t_c;
+
+        res.reduce();
+
+        return res;
+    }
+
     static form identity(const integer& d) {
         return from_abd(integer(1), integer(1), d);
     }

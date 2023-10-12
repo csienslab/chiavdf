@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include "../verifier.h"
 #include "../prover_slow.h"
 #include "../alloc.hpp"
@@ -95,5 +96,40 @@ PYBIND11_MODULE(chiavdf, m) {
         int proof_blob_size = proof_blob.size();
         integer B = GetBFromProof(integer(discriminant), (const uint8_t *)x_s.data(), proof_blob_ptr, proof_blob_size, num_iterations, recursion);
         return B.to_string();
+    });
+
+    m.def("exp", [](const string &a_be, const string &b_be, const string &c_be,
+                    const py::list &exp_be_list) {
+        // a_be, b_be, c_be, exp_be are big endian bytes
+        // exp_be_list is a list of big endian bytes
+        // returns a tuple of big endian bytes
+        string str_a, str_b, str_c;
+        {
+            py::gil_scoped_release release;
+            integer a, b, c;
+            mpz_import(a.impl, a_be.size(), 1, 1, 1, 0, a_be.data());
+            mpz_import(b.impl, b_be.size(), 1, 1, 1, 0, b_be.data());
+            mpz_import(c.impl, c_be.size(), 1, 1, 1, 0, c_be.data());
+            integer D = b * b - integer(4) * a * c;
+            integer L = root(-D, 4);
+            form x = form::from_abc(a, b, c);
+            PulmarkReducer reducer;
+
+            auto exps = exp_be_list.cast<std::vector<string>>();
+            for(auto &exp_be: exps){
+                integer exp;
+                mpz_import(exp.impl, exp_be.size(), 1, 1, 1, 0, exp_be.data());
+                x = FastPowFormNucomp(x, D, exp, L, reducer);
+            }
+            auto res_a = x.a.to_bytes();
+            auto res_b = x.b.to_bytes();
+            auto res_c = x.c.to_bytes();
+            str_a = string(res_a.begin(), res_a.end());
+            str_b = string(res_b.begin(), res_b.end());
+            str_c = string(res_c.begin(), res_c.end());
+        }
+        return py::make_tuple(py::bytes(str_a),
+                              py::bytes(str_b),
+                              py::bytes(str_c));
     });
 }
