@@ -1,3 +1,4 @@
+#pragma once
 #include "include.h"
 #include "create_discriminant.h"
 #include "integer_common.h"
